@@ -1,0 +1,29 @@
+{
+  "name": "article-backend-api",
+  "version": "1.0.0",
+  "description": "Backend API application for a simple article publishing platform",
+  "homepage": "https://github.com/johannesunana/article-backend-api#readme",
+  "bugs": {
+    "url": "https://github.com/johannesunana/article-backend-api/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johannesunana/article-backend-api.git"
+  },
+  "license": "ISC",
+  "author": "Johannes Andrei Unana",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.6.0",
+    "@prisma/client": "^7.6.0",
+    "express": "^5.2.1",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "prisma": "^7.6.0"
+  }
+}

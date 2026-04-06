@@ -1,3 +1,9 @@
+# Node Modules Folder
+/node_modules
+
+# Temporary files
+/tmp
+
 # Logs
 logs
 *.log
