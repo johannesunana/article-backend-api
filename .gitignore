@@ -4,6 +4,9 @@
 # Temporary files
 /tmp
 
+# Prisma generated files
+/generated/prisma
+
 # Logs
 logs
 *.log
