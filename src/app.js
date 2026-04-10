@@ -2,11 +2,10 @@ import express from 'express';
 import responseTime from 'response-time';
 import StatsD from 'node-statsd';
 
-// import { user } from './user/user.model.js';
-import {createUser} from './user/user.model.js';
+import {createUser, loginUser} from './user/user.model.js';
 
 const app = express();
-// const stats = new StatsD()
+
 
 app.use(express.json());
 
@@ -16,7 +15,6 @@ const loggingMiddleware = (req, res, next) => {
 }
 
 app.get('/', loggingMiddleware, (req, res) => {
-  console.log(user);
   res.status(200).send({
     msg: "Home Page"
   });
@@ -37,8 +35,14 @@ app.post('/auth/register', loggingMiddleware, (req, res) => {
 
 /* Login endpoint */
 app.post('/auth/login', loggingMiddleware, (req, res) => {
-  console.log(req.body);
-  res.status(200).send(req.body);  // OK
+  console.log(req.body, "\nBody before passing to loginUser: \n")
+  // not working yet
+  loginUser(req.body)
+  res.status(200).send({
+    id: req.body.id,
+    email: req.body.email,
+    createdAt: req.body.createdAt
+  })
 });
 
 app.listen(3000, () => {
