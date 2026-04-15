@@ -20,6 +20,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
+    "bcrypt": "^6.0.0",
     "email-addresses": "^5.0.0",
     "express": "^5.2.1",
     "node-statsd": "^0.1.1",

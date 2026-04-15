@@ -2,12 +2,11 @@ import express from 'express';
 import responseTime from 'response-time';
 import StatsD from 'node-statsd';
 import emailAddresses from "email-addresses";
+import bcrypt, { hash } from 'bcrypt';
 
 import {createUser, findUserByUsername, findUserByEmail} from './user/user.model.js';
 
 const app = express();
-
-
 app.use(express.json());
 
 const loggingMiddleware = (req, res, next) => {
@@ -40,7 +39,19 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
     }
     
     console.log("creating user");
-    await createUser(req.body);
+
+    // hash password using bcrypt async/await and arrow function callback to handle errors, then create user in database with hashed password
+    
+    const hashedPass = await bcrypt.hash(req.body.password, 10);
+    console.log(`HashedPass: , ${hashedPass}`);   
+    
+    const body = ({
+        "email": req.body.email,
+        "username": req.body.username,
+        "password": hashedPass
+      });
+    
+    await createUser(body);
     console.log("create user successful");
     
     res.status(201).send({
@@ -48,17 +59,19 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
       username: req.body.username
     });
     console.log("response sent");
-
-  } catch (err) {
-    if (err.code === 'P2002') {
-      console.log("user exists");
-      res.status(409).send({ msg: "User already exists" });
-    } else {
-      console.log("server error", err);
-      res.status(500).send({ msg: "Internal Server Error" });
     }
-  };
-});
+   
+    catch (err) {
+      if (err.code === 'P2002') {
+        console.log("user exists");
+        res.status(409).send({ msg: "User already exists" });
+      } else {
+        console.log("server error", err);
+        res.status(500).send({ msg: "Internal Server Error" });
+      }
+    };
+  });
+
 
 /* Login endpoint */
 app.post('/auth/login', loggingMiddleware, async (req, res) => {
