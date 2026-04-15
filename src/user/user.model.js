@@ -10,12 +10,9 @@ const prisma = new PrismaClient({ adapter });
 export const createUser = async (body) => {
   return await prisma.user.create({ // data to insert, select to specify fields to return
     data: body,
-    select: { 
-      id: true,
-      email: true,
-      username: true,
-      createdAt: true
-     }
+    omit: {
+      password: true                // exclude password field from returned data
+    }
   });
 };
 

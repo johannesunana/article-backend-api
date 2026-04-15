@@ -22,7 +22,7 @@ app.get('/', loggingMiddleware, (req, res) => {
 
 /* Register endpoint */
 app.post('/auth/register', loggingMiddleware, async (req, res) => {
-  console.log(req.body, "\n");
+  // console.log(req.body, "\n");
 
   try {
     const existingUserByEmail = await findUserByEmail(req.body);
@@ -41,7 +41,7 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
     console.log("creating user");
 
     const hashedPass = await bcrypt.hash(req.body.password, 10);
-    console.log(`HashedPass ${hashedPass}`);   
+    // console.log(`HashedPass ${hashedPass}`);   
     
     const body = ({
       "email": req.body.email,
