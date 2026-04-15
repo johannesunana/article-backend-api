@@ -28,10 +28,10 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
     const existingUserByEmail = await findUserByEmail(req.body);
     const existingUserByUsername = await findUserByUsername(req.body);
 
-    // if (existingUserByEmail || existingUserByUsername) {
-    //   console.log("user exists check");
-    //   return res.status(409).send({ msg: "User already exists" });
-    // }
+    if (existingUserByEmail || existingUserByUsername) {
+      console.log("user exists check");
+      return res.status(409).send({ msg: "User already exists" });
+    }
     
     if (!emailAddresses.parseOneAddress(req.body.email)) {
       console.log("invalid email check");
@@ -40,24 +40,19 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
     
     console.log("creating user");
 
-    // hash password using bcrypt async/await and arrow function callback to handle errors, then create user in database with hashed password
-    
     const hashedPass = await bcrypt.hash(req.body.password, 10);
-    console.log(`HashedPass: , ${hashedPass}`);   
+    console.log(`HashedPass ${hashedPass}`);   
     
     const body = ({
-        "email": req.body.email,
-        "username": req.body.username,
-        "password": hashedPass
-      });
+      "email": req.body.email,
+      "username": req.body.username,
+      "password": hashedPass
+    });
     
-    await createUser(body);
+    const user = await createUser(body);    // assign result of createUser to variable
     console.log("create user successful");
     
-    res.status(201).send({
-      email: req.body.email,
-      username: req.body.username
-    });
+    res.status(201).json(user);
     console.log("response sent");
     }
    

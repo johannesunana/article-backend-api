@@ -8,13 +8,19 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 export const createUser = async (body) => {
-  await prisma.user.create({
-    data: body
+  return await prisma.user.create({ // data to insert, select to specify fields to return
+    data: body,
+    select: { 
+      id: true,
+      email: true,
+      username: true,
+      createdAt: true
+     }
   });
 };
 
 export const findUserByEmail = async (body) => {
-  await prisma.user.findUnique({
+  return await prisma.user.findUnique({
     where: {
       email: body.email
     }
@@ -22,9 +28,9 @@ export const findUserByEmail = async (body) => {
 };
 
 export const findUserByUsername = async (body) => {
-  await prisma.user.findUnique({
+  return await prisma.user.findUnique({
     where: {
       username: body.username
     }
   });
-}
+};
