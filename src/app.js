@@ -1,10 +1,12 @@
+// src/app.js
+
 import express from 'express';
 import responseTime from 'response-time';
 import StatsD from 'node-statsd';
 import emailAddresses from "email-addresses";
 import bcrypt, { hash } from 'bcrypt';
 
-import {createUser, findUserByUsername, findUserByEmail} from './user/user.model.js';
+import {createUser, findUserByUsername, findUserByEmail, loginEmail, loginUsername} from './user/user.model.js';
 
 const app = express();
 app.use(express.json());
@@ -72,8 +74,40 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
 app.post('/auth/login', loggingMiddleware, async (req, res) => {
   console.log(req.body, "\n")
 
-  
-  const { email } = req.body;  
+  // check if email is a valid email address, if so check for user with that email, else check for user with that username
+  // vary depending if request is email or username
+  try {
+    if (emailAddresses.parseOneAddress(req.body.email)) {
+      var user = await loginEmail(req.body);
+    } else {
+      var user = await loginUsername(req.body);
+    }
+    if (!user) {
+      console.log("user not found check");
+      return res.status(404).send({ msg: "User not found" });
+    }
+    // use brcypt.compare to compare the password in the request body with the hashed password in the database
+    // if they match, return user data, else return 401
+    const passwordMatch = await bcrypt.compare(req.body.password, user.password);
+    if (!passwordMatch) {
+      console.log("invalid password check");
+      return res.status(401).send({ msg: "Invalid password" });
+    }
+    else {
+      console.log("login successful");
+      return res.status(200).json({
+        id: user.id,
+        email: user.email,
+        createdAt: user.createdAt
+      });
+    };
+  }
+  catch (err) {
+    console.log("server error", err);
+    return res.status(500).send({ msg: "Internal Server Error" });
+  };
+
+  // const { email } = req.body;  
   
   res.status(200).send({
     id: user.id,
