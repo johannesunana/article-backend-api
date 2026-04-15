@@ -1,5 +1,4 @@
-// import { PrismaClient } from "../../generated/prisma/client.ts";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../generated/prisma/client.ts";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({
@@ -14,15 +13,18 @@ export const createUser = async (body) => {
   });
 };
 
-export const loginUser = async (body) => {
+export const findUserByEmail = async (body) => {
   await prisma.user.findUnique({
-    where: {email: body.email}
+    where: {
+      email: body.email
+    }
   });
 };
 
-
-// const newUser = await prisma.user.create({
-//   data: body
-// });
-
-// const users = await prisma.user.findMany();
+export const findUserByUsername = async (body) => {
+  await prisma.user.findUnique({
+    where: {
+      username: body.username
+    }
+  });
+}

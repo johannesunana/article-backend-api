@@ -2,7 +2,7 @@ import express from 'express';
 import responseTime from 'response-time';
 import StatsD from 'node-statsd';
 
-import {createUser, loginUser} from './user/user.model.js';
+import {createUser, findUserByUsername, findUserByEmail} from './user/user.model.js';
 
 const app = express();
 
@@ -21,27 +21,47 @@ app.get('/', loggingMiddleware, (req, res) => {
 });
 
 /* Register endpoint */
-app.post('/auth/register', loggingMiddleware, (req, res) => {
-  console.log(req.body, "\nBody before passing to createUser: \n");
+app.post('/auth/register', loggingMiddleware, async (req, res) => {
+  console.log(req.body, "\n");
   
-  createUser(req.body);
-  console.log("\nAfter createUser: \n");
+  // createUser(req.body);
+  // findUnique to check if email or username already exists, if it does, return 409, else create the user and return 201
+  // proceed if findUserByEmail and findUserByUsername return null, else return 409
 
-  res.status(201).send({
-    email: req.body.email,
-    username: req.body.username
-  });  // Created
+  try {
+    const existingUserByEmail = await findUserByEmail(req.body);
+    const existingUserByUsername = await findUserByUsername(req.body);
+
+    if (existingUserByEmail || existingUserByUsername) {
+      return res.status(409).send({ msg: "User already exists" });
+    }
+
+    await createUser(req.body);
+    res.status(201).send({
+      email: req.body.email,
+      username: req.body.username
+    });
+
+  } catch (err) {
+    if (err.code === 'P2002') {
+      res.status(409).send({ msg: "User already exists" });
+    } else {
+      res.status(500).send({ msg: "Internal Server Error" });
+    }
+  };
 });
 
 /* Login endpoint */
-app.post('/auth/login', loggingMiddleware, (req, res) => {
-  console.log(req.body, "\nBody before passing to loginUser: \n")
-  // not working yet
-  loginUser(req.body)
+app.post('/auth/login', loggingMiddleware, async (req, res) => {
+  console.log(req.body, "\n")
+
+  
+  const { email } = req.body;  
+  
   res.status(200).send({
-    id: req.body.id,
-    email: req.body.email,
-    createdAt: req.body.createdAt
+    id: user.id,
+    email: user.email,
+    createdAt: user.body.createdAt
   })
 });
 
