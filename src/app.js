@@ -10,6 +10,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 import {createUser, findUserByUsername, findUserByEmail, loginEmail, loginUsername} from './user/user.model.js';
+import {authenticate} from './middleware/authenticate.js';
 
 const app = express();
 app.use(express.json());
@@ -80,7 +81,7 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
 
 /* Login endpoint */
 app.post('/auth/login', loggingMiddleware, async (req, res) => {
-  console.log(req.body, "\n")
+  // console.log(req.body, "\n")
 
   try {
     if (!req.body.password) {
@@ -143,9 +144,10 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
     const token = jwt.sign(
       {
         userId: user.id,
-        email: user.email
+        email: user.email,
+        username: user.username
       },
-      process.env.JWT_TOKEN,
+      process.env.JWT_SECRET,
       {
         algorithm: "HS256",
         expiresIn: "1h"
@@ -166,8 +168,17 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
   }
   catch (err) {
     console.log("server error", err);
-    return res.status(500).send({ msg: "Internal Server Error" });
+    return res.status(500).send({
+      msg: "Internal Server Error"
+    });
   };
+});
+
+/* Middleware Authentication */
+app.get('/auth/me', loggingMiddleware, authenticate, (req, res) => {
+  res.json({
+    user: req.user
+  });
 });
 
 app.listen(3000, () => {
