@@ -6,7 +6,7 @@ import express from 'express';
 import responseTime from 'response-time';
 import StatsD from 'node-statsd';
 import emailAddresses from "email-addresses";
-import bcrypt, { hash } from 'bcrypt';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 import {createUser, findUserByUsername, findUserByEmail, loginEmail, loginUsername} from './user/user.model.js';
@@ -34,15 +34,21 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
     const existingUserByUsername = await findUserByUsername(req.body);
 
     if (existingUserByEmail || existingUserByUsername) {
-      console.log("user exists check");
+      console.log(`user exists check: existingUserByEmail: ${existingUserByEmail}, existingUserByUsername: ${existingUserByUsername}`);
       return res.status(409).send({ msg: "User already exists" });
-    }
+    };
     
     if (!emailAddresses.parseOneAddress(req.body.email)) {
       console.log("invalid email check");
       return res.status(400).send({ msg: "Invalid email address" });
-    }
+    };
     
+    // minimum password length 8 characters
+    if (req.body.password.length < 8) {
+      console.log(`invalid password length: ${req.body.password.length}`);
+      return res.status(400).send({ msg: "Password must be at least 8 characters long" });
+    };
+
     console.log("creating user");
 
     const hashedPass = await bcrypt.hash(req.body.password, 10);
@@ -76,23 +82,52 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
 app.post('/auth/login', loggingMiddleware, async (req, res) => {
   console.log(req.body, "\n")
 
-  // check if email is a valid email address, if so check for user with that email, else check for user with that username
-  // vary depending if request is email or username
-
-  // maybe refactor? combine the if checks to single txn?
   try {
-    if (emailAddresses.parseOneAddress(req.body.email)) {
-      var user = await loginEmail(req.body);
+    if (!req.body.password) {
+      console.log("missing password check");
+      return res.status(400).send({ msg: "Password is required" });
+    };
+
+    if (req.body.password.length < 8) {
+      console.log("invalid password length");
+      return res.status(400).send({ msg: "Password must be at least 8 characters long" });
+    };
+
+    let user = null;
+    
+    // require an email object or username object before proceeding with bcrypt.compare
+    if (req.body.email) {
+
+      // validate email before proceeding
+      if (!emailAddresses.parseOneAddress(req.body.email)) {
+        console.log("invalid email check");
+        return res.status(400).send({ msg: "Invalid email address" });
+      };
+
+      // assign email to user variable
+      user = await loginEmail({ 
+        email: req.body.email
+      });
       console.log(`loginEmail response: ${user}`);
-    } else {
-      var user = await loginUsername(req.body);
+    }
+    else if (req.body.username) {
+
+      // assign username to user variable
+      user = await loginUsername({ 
+        username: req.body.username
+      });
       console.log(`loginUsername response: ${user}`);
     }
+    else {
+      console.log("failed email/username check");
+      return res.status(400).send({ msg: "Email or username is required" });
+    };
     
     if (!user) {
       console.log("user not found check");
       return res.status(404).send({ msg: "User not found" });
-    }
+    };
+
     // use brcypt.compare to compare the password in the request body with the hashed password in the database
     // if they match, return user data, else return 401
     const passwordMatch = await bcrypt.compare(req.body.password, user.password);
@@ -102,48 +137,37 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
       console.log(`passwordMatch response: ${passwordMatch} invalid password check`);
       return res.status(401).send({ msg: "Invalid password" });
     }
-    else {
-      console.log("login successful");
 
-      let token = jwt.sign(
-        { userId: user.id,
-          email: user.email
-        },
-        process.env.JWT_TOKEN,
-        { algorithm: "HS256",
-          expiresIn: "1h"
-        }
-      );
-      console.log(`Token response: ${token}`);
+    console.log("login successful");
 
-      return res.status(200).json({
-        success: true,
-        token: token,
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
-      });
-    // return res.status(200).json(user);
-    };
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email
+      },
+      process.env.JWT_TOKEN,
+      {
+        algorithm: "HS256",
+        expiresIn: "1h"
+      }
+    );
+    console.log(`Token response: ${token}`);
 
+    return res.status(200).json({
+      success: true,
+      token: token,
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    });
     
   }
   catch (err) {
     console.log("server error", err);
     return res.status(500).send({ msg: "Internal Server Error" });
   };
-
-  // const { email } = req.body;  
-  
-  // res.status(200).send({
-  //   id: user.id,
-  //   email: user.email,
-  //   createdAt: user.createdAt
-  // });
-
-  res.status(200).json(user);
 });
 
 app.listen(3000, () => {
