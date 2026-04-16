@@ -46,6 +46,16 @@ export const loginUsername = async (body) => {
   return await prisma.user.findUnique({
     where: {
       username: body.username
-    }
+    },
+    // omit: {
+    //   password: true
+    // },
+    // select: {
+    //   id: true,
+    //   email: true,
+    //   username: true,
+    //   createdAt: true,
+    //   updatedAt: true
+    // }
   });
 };
