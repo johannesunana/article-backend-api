@@ -19,6 +19,9 @@ export const createUser = async (body) => {
 };
 
 export const findUserByEmail = async (body) => {
+  if (!body.email) {
+    return null;
+    }
   return await prisma.user.findUnique({
     where: {
       email: body.email
@@ -27,6 +30,9 @@ export const findUserByEmail = async (body) => {
 };
 
 export const findUserByUsername = async (body) => {
+  if (!body.username) {
+      return null;
+    }
   return await prisma.user.findUnique({
     where: {
       username: body.username
@@ -35,6 +41,9 @@ export const findUserByUsername = async (body) => {
 };
 
 export const loginEmail = async (body) => {
+  if (!body.email) {
+      return null;
+    }
   return await prisma.user.findUnique({
     where: {
       email: body.email
@@ -43,19 +52,12 @@ export const loginEmail = async (body) => {
 };
 
 export const loginUsername = async (body) => {
+  if (!body.username) {
+     return null;
+  }
   return await prisma.user.findUnique({
     where: {
       username: body.username
     },
-    // omit: {
-    //   password: true
-    // },
-    // select: {
-    //   id: true,
-    //   email: true,
-    //   username: true,
-    //   createdAt: true,
-    //   updatedAt: true
-    // }
   });
 };
