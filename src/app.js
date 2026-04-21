@@ -7,6 +7,7 @@ import express from 'express';
 import emailAddresses from "email-addresses";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import morgan from 'morgan';
 
 import {createUser, findUserByUsername, findUserByEmail, loginEmail, loginUsername} from './user/user.model.js';
 import {authenticate} from './middleware/authenticate.js';
@@ -14,10 +15,12 @@ import {authenticate} from './middleware/authenticate.js';
 const app = express();
 app.use(express.json());
 
-const loggingMiddleware = (req, res, next) => {
-  console.log(`${req.method} - ${req.url}`);
-  next();
-}
+// const loggingMiddleware = (req, res, next) => {
+//   console.log(`${req.method} - ${req.url}`);
+//   next();
+// }
+
+app.use(morgan(':date[iso] - :method :url :status \(:response-time ms\)'));
 
 const jsonSyntaxErrorHandler = (err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
@@ -28,14 +31,14 @@ const jsonSyntaxErrorHandler = (err, req, res, next) => {
 };
 app.use(jsonSyntaxErrorHandler);
 
-app.get('/', loggingMiddleware, (req, res) => {
+app.get('/', (req, res) => {
   res.status(200).json({
     msg: "Home Page"
   });
 });
 
 /* Register endpoint */
-app.post('/auth/register', loggingMiddleware, async (req, res) => {
+app.post('/auth/register', async (req, res) => {
 
   try {
     if (!req.body.email || !req.body.username || !req.body.password) {
@@ -97,7 +100,7 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
   });
 
 /* Login endpoint */
-app.post('/auth/login', loggingMiddleware, async (req, res) => {
+app.post('/auth/login', async (req, res) => {
 
   try {
     if (!req.body.password) {
@@ -191,7 +194,7 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
 });
 
 /* Middleware Authentication */
-app.get('/auth/me', loggingMiddleware, authenticate, (req, res) => {
+app.get('/auth/me', authenticate, (req, res) => {
   res.json({
     user: req.user
   });
