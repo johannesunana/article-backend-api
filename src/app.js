@@ -1,10 +1,9 @@
 // src/app.js
+
 import dotenv from "dotenv";
 dotenv.config();
 
 import express from 'express';
-import responseTime from 'response-time';
-import StatsD from 'node-statsd';
 import emailAddresses from "email-addresses";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -28,9 +27,12 @@ app.get('/', loggingMiddleware, (req, res) => {
 
 /* Register endpoint */
 app.post('/auth/register', loggingMiddleware, async (req, res) => {
-  // console.log(req.body, "\n");
 
   try {
+    if (!req.body.email || !req.body.username || !req.body.password) {
+      return res.status(400).send({ msg: "Email, username, and password are required" });
+    }
+
     const existingUserByEmail = await findUserByEmail(req.body);
     const existingUserByUsername = await findUserByUsername(req.body);
 
@@ -44,6 +46,11 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
       return res.status(400).send({ msg: "Invalid email address" });
     };
     
+    // check empty password
+    if (!req.body.password) {
+      return res.status(400).send({ msg: "Password is required" });
+    }
+
     // minimum password length 8 characters
     if (req.body.password.length < 8) {
       console.log(`invalid password length: ${req.body.password.length}`);
@@ -81,7 +88,6 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
 
 /* Login endpoint */
 app.post('/auth/login', loggingMiddleware, async (req, res) => {
-  // console.log(req.body, "\n")
 
   try {
     if (!req.body.password) {
@@ -89,8 +95,9 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
       return res.status(400).send({ msg: "Password is required" });
     };
 
-    if (req.body.password.length < 8) {
-      console.log("invalid password length");
+    // check empty password, minimum password length 8 characters
+    if (!req.body.password || req.body.password.length < 8) {
+      console.log(`invalid password length: ${req.body.password.length}`);
       return res.status(400).send({ msg: "Password must be at least 8 characters long" });
     };
 
@@ -126,7 +133,7 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
     
     if (!user) {
       console.log("user not found check");
-      return res.status(404).send({ msg: "User not found" });
+      return res.status(401).send({ msg: "Invalid credentials" });
     };
 
     // use brcypt.compare to compare the password in the request body with the hashed password in the database
@@ -136,7 +143,7 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
     
     if (!passwordMatch) {
       console.log(`passwordMatch response: ${passwordMatch} invalid password check`);
-      return res.status(401).send({ msg: "Invalid password" });
+      return res.status(401).send({ msg: "Invalid credentials" });
     }
 
     console.log("login successful");
@@ -153,7 +160,6 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
         expiresIn: "1h"
       }
     );
-    console.log(`Token response: ${token}`);
 
     return res.status(200).json({
       success: true,
