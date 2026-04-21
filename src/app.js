@@ -19,6 +19,15 @@ const loggingMiddleware = (req, res, next) => {
   next();
 }
 
+const jsonSyntaxErrorHandler = (err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error("bad json request");
+    return res.status(400).json({ msg: "Invalid JSON body" });
+  }
+  next(err);
+};
+app.use(jsonSyntaxErrorHandler);
+
 app.get('/', loggingMiddleware, (req, res) => {
   res.status(200).json({
     msg: "Home Page"
