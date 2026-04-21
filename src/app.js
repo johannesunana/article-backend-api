@@ -20,7 +20,7 @@ const loggingMiddleware = (req, res, next) => {
 }
 
 app.get('/', loggingMiddleware, (req, res) => {
-  res.status(200).send({
+  res.status(200).json({
     msg: "Home Page"
   });
 });
@@ -30,7 +30,8 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
 
   try {
     if (!req.body.email || !req.body.username || !req.body.password) {
-      return res.status(400).send({ msg: "Email, username, and password are required" });
+      console.log("either email, password, username not provided");
+      return res.status(400).json({ msg: "Email, username, and password are required" });
     }
 
     const existingUserByEmail = await findUserByEmail(req.body);
@@ -38,23 +39,23 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
 
     if (existingUserByEmail || existingUserByUsername) {
       console.log(`user exists check: existingUserByEmail: ${existingUserByEmail}, existingUserByUsername: ${existingUserByUsername}`);
-      return res.status(409).send({ msg: "User already exists" });
+      return res.status(409).json({ msg: "User already exists" });
     };
     
     if (!emailAddresses.parseOneAddress(req.body.email)) {
       console.log("invalid email check");
-      return res.status(400).send({ msg: "Invalid email address" });
+      return res.status(400).json({ msg: "Invalid email address" });
     };
     
     // check empty password
     if (!req.body.password) {
-      return res.status(400).send({ msg: "Password is required" });
+      return res.status(400).json({ msg: "Password is required" });
     }
 
     // minimum password length 8 characters
     if (req.body.password.length < 8) {
       console.log(`invalid password length: ${req.body.password.length}`);
-      return res.status(400).send({ msg: "Password must be at least 8 characters long" });
+      return res.status(400).json({ msg: "Password must be at least 8 characters long" });
     };
 
     console.log("creating user");
@@ -78,10 +79,10 @@ app.post('/auth/register', loggingMiddleware, async (req, res) => {
     catch (err) {
       if (err.code === 'P2002') {
         console.log("user exists");
-        res.status(409).send({ msg: "User already exists" });
+        res.status(409).json({ msg: "User already exists" });
       } else {
         console.log("server error", err);
-        res.status(500).send({ msg: "Internal Server Error" });
+        res.status(500).json({ msg: "Internal Server Error" });
       }
     };
   });
@@ -92,13 +93,13 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
   try {
     if (!req.body.password) {
       console.log("missing password check");
-      return res.status(400).send({ msg: "Password is required" });
+      return res.status(400).json({ msg: "Password is required" });
     };
 
     // check empty password, minimum password length 8 characters
     if (!req.body.password || req.body.password.length < 8) {
       console.log(`invalid password length: ${req.body.password.length}`);
-      return res.status(400).send({ msg: "Password must be at least 8 characters long" });
+      return res.status(400).json({ msg: "Password must be at least 8 characters long" });
     };
 
     let user = null;
@@ -109,7 +110,7 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
       // validate email before proceeding
       if (!emailAddresses.parseOneAddress(req.body.email)) {
         console.log("invalid email check");
-        return res.status(400).send({ msg: "Invalid email address" });
+        return res.status(400).json({ msg: "Invalid email address" });
       };
 
       // assign email to user variable
@@ -128,12 +129,12 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
     }
     else {
       console.log("failed email/username check");
-      return res.status(400).send({ msg: "Email or username is required" });
+      return res.status(400).json({ msg: "Email or username is required" });
     };
     
     if (!user) {
       console.log("user not found check");
-      return res.status(401).send({ msg: "Invalid credentials" });
+      return res.status(401).json({ msg: "Invalid credentials" });
     };
 
     // use brcypt.compare to compare the password in the request body with the hashed password in the database
@@ -143,7 +144,7 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
     
     if (!passwordMatch) {
       console.log(`passwordMatch response: ${passwordMatch} invalid password check`);
-      return res.status(401).send({ msg: "Invalid credentials" });
+      return res.status(401).json({ msg: "Invalid credentials" });
     }
 
     console.log("login successful");
@@ -174,7 +175,7 @@ app.post('/auth/login', loggingMiddleware, async (req, res) => {
   }
   catch (err) {
     console.log("server error", err);
-    return res.status(500).send({
+    return res.status(500).json({
       msg: "Internal Server Error"
     });
   };
