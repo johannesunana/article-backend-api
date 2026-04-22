@@ -9,12 +9,27 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
+const publicUserSelect = {
+  id: true,
+  email: true,
+  username: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
+const authUserSelect = {
+  id: true,
+  email: true,
+  username: true,
+  password: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
 export const createUser = async (body) => {
   return await prisma.user.create({ // data to insert, select to specify fields to return
     data: body,
-    omit: {
-      password: true                // exclude password field from returned data
-    }
+    select: publicUserSelect,
   });
 };
 
@@ -25,7 +40,8 @@ export const findUserByEmail = async (body) => {
   return await prisma.user.findUnique({
     where: {
       email: body.email
-    }
+    },
+    select: publicUserSelect,
   });
 };
 
@@ -42,22 +58,24 @@ export const findUserByUsername = async (body) => {
 
 export const loginEmail = async (body) => {
   if (!body.email) {
-      return null;
+    return null;
     }
   return await prisma.user.findUnique({
     where: {
       email: body.email
-    }
+    },
+    select: authUserSelect,
   });
 };
 
 export const loginUsername = async (body) => {
   if (!body.username) {
-     return null;
-  }
+      return null;
+    }
   return await prisma.user.findUnique({
     where: {
       username: body.username
     },
+    select: authUserSelect,
   });
 };
