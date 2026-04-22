@@ -18,12 +18,8 @@ const publicUserSelect = {
 };
 
 const authUserSelect = {
-  id: true,
-  email: true,
-  username: true,
+  ...publicUserSelect,
   password: true,
-  createdAt: true,
-  updatedAt: true,
 };
 
 export const createUser = async (body) => {
@@ -56,7 +52,7 @@ export const findUserByUsername = async (body) => {
   });
 };
 
-export const loginEmail = async (body) => {
+export const getEmail = async (body) => {
   if (!body.email) {
     return null;
     }
@@ -68,7 +64,7 @@ export const loginEmail = async (body) => {
   });
 };
 
-export const loginUsername = async (body) => {
+export const getUsername = async (body) => {
   if (!body.username) {
       return null;
     }

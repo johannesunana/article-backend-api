@@ -9,7 +9,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import morgan from 'morgan';
 
-import {createUser, findUserByUsername, findUserByEmail, loginEmail, loginUsername} from './user/user.model.js';
+import {createUser, findUserByUsername, findUserByEmail, getEmail, getUsername} from './user/user.model.js';
 import {authenticate} from './middleware/authenticate.js';
 
 const app = express();
@@ -80,7 +80,7 @@ app.post('/auth/register', async (req, res) => {
 
     /* Encrypt password with salt = 10 */
     const hashedPass = await bcrypt.hash(req.body.password, 10);
-    // console.log(`HashedPass ${hashedPass}`);   
+    // console.log(`HashedPass ${hashedPass}`);
     
     /* Construct new body with hashedPass */
     const body = ({
@@ -136,18 +136,18 @@ app.post('/auth/login', async (req, res) => {
       };
 
       // assign email to user variable
-      user = await loginEmail({ 
+      user = await getEmail({ 
         email: req.body.email
       });
-      console.log(`loginEmail response: ${user}`);
+      console.log(`getEmail response: ${user}`);
     }
     else if (req.body.username) {
 
       // assign username to user variable
-      user = await loginUsername({ 
+      user = await getUsername({ 
         username: req.body.username
       });
-      console.log(`loginUsername response: ${user}`);
+      console.log(`getUsername response: ${user}`);
     }
     else {
       console.log("failed email/username check");
@@ -186,13 +186,7 @@ app.post('/auth/login', async (req, res) => {
     );
 
     return res.status(200).json({
-      success: true,
       token: token,
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
     });
     
   }
